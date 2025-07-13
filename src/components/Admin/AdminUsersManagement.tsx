@@ -81,9 +81,9 @@ export function AdminUsersManagement() {
       return;
     }
     if (admin.uid === currentUser?.uid) { toast.error('לא ניתן למחוק את עצמך.'); return; }
-    if (!confirm(`האם אתה בטוח שברצונך למחוק את המנהל "${admin.displayName}"?`)) { return; }
+    if (!confirm(`האם אתה בטוח שברצונך למחוק את המנהל "${admin.displayName}"?\n\nפעולה זו תמחק גם את כל השיבוצים הקשורים למשתמש זה.`)) { return; }
     try {
-      const success = await FirebaseService.deleteAdminUser(admin.uid);
+      const success = await FirebaseService.deleteAdminUserWithCleanup(admin.uid);
       if (success) { toast.success('המנהל נמחק בהצלחה!'); }
     } catch (error: any) { console.error('Error deleting admin:', error); toast.error(error.message || 'שגיאה במחיקת המנהל'); }
   };

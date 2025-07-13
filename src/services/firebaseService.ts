@@ -99,6 +99,61 @@ export class FirebaseService {
     }
   }
 
+  // Enhanced admin deletion with cascading cleanup
+  static async deleteAdminUserWithCleanup(uid: string): Promise<boolean> {
+    try {
+      // Step 1: Get all data that needs to be cleaned up
+      const menuItemsRef = ref(database, 'menuItems');
+      const assignmentsRef = ref(database, 'assignments');
+      
+      const [menuItemsSnapshot, assignmentsSnapshot] = await Promise.all([
+        get(menuItemsRef),
+        get(assignmentsRef)
+      ]);
+
+      const updates: { [key: string]: any } = {};
+      let cleanupCount = 0;
+
+      // Step 2: Clean up menu items assigned to this user
+      if (menuItemsSnapshot.exists()) {
+        const menuItems = menuItemsSnapshot.val();
+        Object.entries(menuItems).forEach(([itemId, item]: [string, any]) => {
+          if (item.assignedTo === uid) {
+            updates[`/menuItems/${itemId}/assignedTo`] = null;
+            updates[`/menuItems/${itemId}/assignedToName`] = null;
+            updates[`/menuItems/${itemId}/assignedAt`] = null;
+            cleanupCount++;
+          }
+        });
+      }
+
+      // Step 3: Clean up assignment records for this user
+      if (assignmentsSnapshot.exists()) {
+        const assignments = assignmentsSnapshot.val();
+        Object.entries(assignments).forEach(([assignmentId, assignment]: [string, any]) => {
+          if (assignment.userId === uid) {
+            updates[`/assignments/${assignmentId}`] = null;
+            cleanupCount++;
+          }
+        });
+      }
+
+      // Step 4: Remove from admins table
+      updates[`/admins/${uid}`] = null;
+
+      // Step 5: Execute all updates atomically
+      if (Object.keys(updates).length > 0) {
+        await update(ref(database), updates);
+      }
+
+      console.log(`Admin user deleted with cleanup: ${uid}, cleaned ${cleanupCount} related records`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting admin user with cleanup:', error);
+      throw new Error('שגיאה במחיקת המנהל וניקוי הנתונים הקשורים');
+    }
+  }
+
   static async deleteAdminUser(uid: string): Promise<boolean> {
     try {
       // Remove from admins table

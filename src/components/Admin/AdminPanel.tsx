@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Plus, Settings, Users, BarChart3, Shield } from 'lucide-react';
+import { Plus, Settings, Users, BarChart3, Shield, AlertTriangle } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { EventForm } from './EventForm';
 import { EventsManagement } from './EventsManagement';
 import { Statistics } from './Statistics';
 import { AdminUsersManagement } from './AdminUsersManagement';
+import { DataCleanupTool } from './DataCleanupTool';
 
 export function AdminPanel() {
   const { events, assignments } = useStore();
   const [activeTab, setActiveTab] = useState<'events' | 'stats' | 'admins'>('events');
   const [showEventForm, setShowEventForm] = useState(false);
+  const [showDataCleanup, setShowDataCleanup] = useState(false);
 
   const tabs = [
     { id: 'events', label: 'ניהול אירועים', icon: Settings },
@@ -33,6 +35,16 @@ export function AdminPanel() {
         <div className="flex items-center space-x-2 rtl:space-x-reverse">
           <p>שיבוצים:</p>
           <strong className="text-blue-600">{assignments.length}</strong>
+        </div>
+        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+          <button
+            onClick={() => setShowDataCleanup(true)}
+            className="flex items-center space-x-1 rtl:space-x-reverse text-orange-600 hover:text-orange-700 transition-colors"
+            title="כלי ניקוי נתונים"
+          >
+            <AlertTriangle className="h-4 w-4" />
+            <span>ניקוי נתונים</span>
+          </button>
         </div>
       </div>
 
@@ -90,6 +102,13 @@ export function AdminPanel() {
       {showEventForm && (
         <EventForm
           onClose={() => setShowEventForm(false)}
+        />
+      )}
+
+      {/* Data Cleanup Tool */}
+      {showDataCleanup && (
+        <DataCleanupTool
+          onClose={() => setShowDataCleanup(false)}
         />
       )}
     </div>
